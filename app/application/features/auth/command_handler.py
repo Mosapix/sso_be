@@ -1,9 +1,10 @@
 from datetime import timedelta
 
 from fastapi import status
+from fastapi.security import HTTPAuthorizationCredentials
 
 from app.application.response import Response
-from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_user
 from app.domain.entities import User, UserProfile
 from app.infrastructure.repositories import UserRepository, UserProfileRepository
 from app.domain.schemas.user import UserCreate, UserLogin
@@ -65,3 +66,18 @@ class AuthCommandHandler:
             message="Successfully logged in",
             data={"access_token": access_token, "token_type": "bearer"}
         )
+
+    def validate_token(self, token: str) -> Response:
+        try:
+            _ = get_current_user(HTTPAuthorizationCredentials(credentials=token, scheme="Bearer"))
+            return Response(
+                status_code=status.HTTP_200_OK,
+                message="Valid token",
+                data=True
+            )
+        except Exception as e:
+            return Response(
+                status_code=status.HTTP_200_OK,
+                message="Invalid token",
+                data=False
+            )

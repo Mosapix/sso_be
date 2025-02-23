@@ -9,9 +9,9 @@ router = APIRouter()
 
 profile_query_handler = ProfileQueryHandler()
 
-@router.get("")
+@router.get("", response_model=UserRead)
 def get_profile(user: dict = Depends(get_current_user)):
     result = profile_query_handler.profile(user)
     if result.status_code == status.HTTP_200_OK:
-        return result
+        return result.data
     return HTTPException(status_code=result.status_code, detail=result.message)
