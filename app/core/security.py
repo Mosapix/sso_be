@@ -1,16 +1,16 @@
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 
 from app.core.config import settings
 
-
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = HTTPBearer()
+
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
@@ -21,6 +21,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     to_encode.update({'exp': expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
 def decode_access_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -28,9 +29,10 @@ def decode_access_token(token: str) -> dict:
     except JWTError:
         raise ValueError("Invalid token")
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+
+def get_current_user(token: HTTPAuthorizationCredentials = Depends(oauth2_scheme)) -> dict:
     try:
-        payload = decode_access_token(token)
+        payload = decode_access_token(token.credentials)
         email: str = payload.get('sub')
         if email is None:
             raise ValueError("Invalid token payload")

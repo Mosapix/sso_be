@@ -10,7 +10,7 @@ from app.domain.schemas.user import UserCreate, UserLogin
 from app.utils.hash import hash_password, verify_password
 
 
-class AuthCommandService:
+class AuthCommandHandler:
     def __init__(self):
         self.user_repository = UserRepository()
         self.user_profile_repository = UserProfileRepository()
