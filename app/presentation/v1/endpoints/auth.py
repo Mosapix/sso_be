@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, status
 
-from app.core.security import get_current_user
 from app.domain.schemas.user import Token, UserLogin, UserCreate
 from app.application.features.auth.command_handler import AuthCommandHandler
 
@@ -22,7 +21,7 @@ def login(request: UserLogin):
         return result.data
     return HTTPException(status_code=result.status_code, detail=result.message)
 
-@router.post("/validate_token", response_model=bool)
-def validate_token(token: str):
-    result = auth_command_handler.validate_token(token)
-    return result.data
+# @router.post("/validate_token")
+# def validate_token(token: str):
+#     result = auth_command_handler.validate_token(token)
+#     return result.data

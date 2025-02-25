@@ -10,7 +10,7 @@ class ProfileQueryHandler:
         self.user_repository = UserRepository()
         self.user_profile_repository = UserProfileRepository()
 
-    def profile(self, user: dict) -> Response:
+    def profile(self, user: dict) -> Response[UserRead]:
         user = self.user_repository.get_by_email(user["email"])
         return Response(
             status_code=status.HTTP_200_OK,

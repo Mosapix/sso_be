@@ -1,4 +1,5 @@
 from datetime import timedelta
+from http.client import HTTPException
 
 from fastapi import status
 from fastapi.security import HTTPAuthorizationCredentials
@@ -9,6 +10,7 @@ from app.domain.entities import User, UserProfile
 from app.infrastructure.repositories import UserRepository, UserProfileRepository
 from app.domain.schemas.user import UserCreate, UserLogin
 from app.utils.hash import hash_password, verify_password
+from app.domain.schemas.user import Token
 
 
 class AuthCommandHandler:
@@ -16,7 +18,7 @@ class AuthCommandHandler:
         self.user_repository = UserRepository()
         self.user_profile_repository = UserProfileRepository()
 
-    def register(self, command: UserCreate) -> Response:
+    def register(self, command: UserCreate) -> Response[Token | None]:
         existing_user = self.user_repository.get_by_email(email=command.email)
         if existing_user:
             return Response(
@@ -45,10 +47,10 @@ class AuthCommandHandler:
         return Response(
             status_code=status.HTTP_201_CREATED,
             message="Successfully registered",
-            data={"access_token": access_token, "token_type": "bearer"}
+            data=Token(access_token=access_token, token_type="bearer")
         )
 
-    def login(self, command: UserLogin) -> Response:
+    def login(self, command: UserLogin) -> Response[Token | None]:
         user = self.user_repository.get_by_email(email=command.email)
         if not user or not verify_password(command.password, user.hashed_password):
             return Response(
@@ -64,20 +66,21 @@ class AuthCommandHandler:
         return Response(
             status_code=status.HTTP_200_OK,
             message="Successfully logged in",
-            data={"access_token": access_token, "token_type": "bearer"}
+            data=Token(access_token=access_token, token_type="bearer")
         )
 
-    def validate_token(self, token: str) -> Response:
-        try:
-            _ = get_current_user(HTTPAuthorizationCredentials(credentials=token, scheme="Bearer"))
-            return Response(
-                status_code=status.HTTP_200_OK,
-                message="Valid token",
-                data=True
-            )
-        except Exception as e:
-            return Response(
-                status_code=status.HTTP_200_OK,
-                message="Invalid token",
-                data=False
-            )
+    # def validate_token(self, token: str) -> Response:
+    #     try:
+    #         payload = get_current_user(HTTPAuthorizationCredentials(credentials=token, scheme="Bearer"))
+    #         user = self.user_repository.get_by_email(payload["email"])
+    #         return Response(
+    #             status_code=status.HTTP_200_OK,
+    #             message="Valid token",
+    #             data={"valid": True, "user_id": user.id}
+    #         )
+    #     except HTTPException:
+    #         return Response(
+    #             status_code=status.HTTP_200_OK,
+    #             message="Invalid token",
+    #             data={"valid": False, "user_id": None}
+    #         )
